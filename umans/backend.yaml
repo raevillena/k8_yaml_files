@@ -1,0 +1,20 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: umans-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: umans-backend
+  template:
+    metadata:
+      labels:
+        app: umans-backend
+    spec:
+      containers:
+      - name: umans-backend
+        image: raevillena21/umans-api:v1.0.0
+        ports:
+        - containerPort: 3001
+      dnsPolicy: Default
