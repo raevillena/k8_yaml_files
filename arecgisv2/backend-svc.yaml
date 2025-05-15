@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: arecgisv2-backend-service
+  labels:
+    app: arecgisv2-backend
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    nodePort: 31130
+  selector:
+    app: arecgisv2-backend
