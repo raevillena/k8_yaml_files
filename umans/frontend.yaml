@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: umans-frontend
-        image: raevillena21/umans-static:v1.0.9
+        image: raevillena21/umans-static:v1.1.0
         ports:
         - containerPort: 80
