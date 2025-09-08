@@ -14,7 +14,20 @@ spec:
     spec:
       containers:
       - name: backend
-        image: kowbee/arec-api:v1
+        image: tayawaaean0519/arecgis-api:v2
         ports:
         - containerPort: 3001
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: SECRET_KEY
+          value: "2023@REcMMSU123456789"
+        - name: ACCESS_TOKEN_SECRET
+          value: "f45750d93da79670e42e98165b7101424626bb8387a9bd215066931c216ac65ee78908d2367f67bd713752e39390047123675f0efe178168b7ece602add9503a"
+        - name: REFRESH_TOKEN_SECRET
+          value: "a62e4709d3a894840f235d491ebaba3ac1d220394c1896ab56b5da1da731fa26b6460d8951190cb6f8feded8671398e18f02e0f8f78fd57be48bc603dfd20372"
+        - name: ALLOWED_ORIGINS
+          value: "https://arec.mmsu.edu.ph,http://arec.mmsu.edu.ph"
+        - name: DATABASE_URI
+          value: "mongodb://arec:arec%40mmsu@10.10.30.102:27017/arec?authSource=arec"
       dnsPolicy: Default
