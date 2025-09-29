@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: tayawaaean0519/arecgis-api:v11
+        image: tayawaaean0519/arecgis-api:v2
         ports:
         - containerPort: 3001
         env:
