@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: react
-        image: tayawaaean0519/arecgis-frontend:v12
+        image: tayawaaean0519/arecgis-frontend:v15
         ports:
         - containerPort: 80
