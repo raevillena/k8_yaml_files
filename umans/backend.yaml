@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: umans-backend
-        image: raevillena21/umans-api:v1.2.8
+        image: raevillena21/umans-api:v1.3.0
         ports:
         - containerPort: 3001
       dnsPolicy: Default
