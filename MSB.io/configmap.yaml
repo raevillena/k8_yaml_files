@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: file-api-config
+  namespace: default
+data:
+  PORT: "3000"
+  REDIS_HOST: "10.10.30.102"
+  REDIS_PORT: "6379"
+  MINIO_ENDPOINT: "10.10.30.10"
+  MINIO_PORT: "9000"
+  MINIO_USE_SSL: "false"
+  MINIO_BUCKET_PREFIX: "files"
+  MAX_UPLOAD_SIZE: "10485760"
+  ALLOWED_MIME_TYPES: "image/jpeg,image/png,image/gif,image/webp,application/pdf,text/plain,application/json"
+  AUTO_CREATE_BUCKETS: "true"
+  RATE_LIMIT_UPLOAD_URL_MAX: "30"
