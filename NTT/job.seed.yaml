@@ -13,7 +13,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: seed
-          image: raevillena21/ntt:v1
+          image: raevillena21/ntt:v2
           imagePullPolicy: Always
           command: ["npm"]
           args: ["run", "db:seed"]
