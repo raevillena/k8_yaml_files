@@ -1,0 +1,113 @@
+# Kubernetes manifest for SOList (one Deployment running the Docker image
+# built from the repo's Dockerfile — Express API + built React frontend in a
+# single process, see server/index.js).
+#
+# No Ingress here on purpose — domain (solist.nbericmmsu.com) and TLS are
+# handled by an external reverse proxy in front of the cluster. The Service
+# below is a NodePort fixed at 31128 — point that reverse proxy at
+# <any-node-ip>:31128.
+#
+# The Secret below already has real credentials in it (Mongo URI, JWT
+# secret, SMTP creds) — this file must NOT be committed to git as-is. Either
+# keep it out of version control entirely, or apply it once and then strip
+# the stringData values back out / regenerate the Secret with
+# `kubectl create secret generic solist-secrets --from-literal=...` instead.
+#
+# Image is built and pushed to Docker Hub as juliusrarogal/solist-app:v1.
+# imagePullPolicy is Always, so every pod (re)start re-pulls that tag — to
+# ship a code change, build+push a new tag (or `:v1` again, since Always
+# re-pulls it) and update `image:` below before re-applying:
+#   docker build -t juliusrarogal/solist-app:v1 .
+#   docker push juliusrarogal/solist-app:v1
+#   kubectl apply -f k8s/manifest.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: solist-config
+data:
+  MONGODB_DB: "solarlink"
+  PORT: "5000"
+  # Public URL this app is reachable at — used to build links in emails.
+  APP_URL: "https://solist.nbericmmsu.com"
+  CLIENT_URL: "https://solist.nbericmmsu.com"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: solist-secrets
+type: Opaque
+stringData:
+  MONGODB_URI: "mongodb://arec:arec%40mmsu@10.10.30.102:27017/solist?authSource=arec"
+  JWT_SECRET: "a1e4f0c9b2d7e6f5a3c8b1d0e9f2a7c6b5d4e3f2a1c0b9d8e7f6a5c4b3d2e1f0"
+  SMTP_USER: "care@mmsu.edu.ph"
+  SMTP_PASS: "uxquryisncmlohjs"
+  ACCESS_REQUEST_EMAIL: "care@mmsu.edu.ph"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: solist-app
+  labels:
+    app: solist-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: solist-app
+  template:
+    metadata:
+      labels:
+        app: solist-app
+    spec:
+      containers:
+        - name: solist-app
+          image: juliusrarogal/solist-app:v1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - configMapRef:
+                name: solist-config
+            - secretRef:
+                name: solist-secrets
+          # /api/health pings MongoDB, so readiness correctly waits for a
+          # working DB connection before this pod gets traffic. Liveness
+          # uses a plain TCP check instead of the same endpoint — killing
+          # the pod over a transient DB hiccup would just restart-loop it
+          # without fixing anything.
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: solist-app
+spec:
+  selector:
+    app: solist-app
+  ports:
+    - port: 5000
+      targetPort: 5000
+      nodePort: 31128
+  type: NodePort

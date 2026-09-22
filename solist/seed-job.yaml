@@ -1,0 +1,57 @@
+# One-time seeding Job for a fresh SOList database — creates the first
+# Super Admin (SPA-0001) and Admin (AD-0001) logins so there's a way in
+# before those accounts are used to create everyone else via User Settings
+# / Access Requests. Apply k8s/manifest.yaml first (this reads the
+# MONGODB_URI etc. from its solist-config/solist-secrets), then apply this
+# file:
+#   kubectl apply -f k8s/manifest.yaml
+#   kubectl apply -f k8s/seed-job.yaml
+#
+# It's a Job, not a Deployment — runs once and exits, doesn't restart. Safe
+# to leave applied: scripts/seed-default-accounts.mjs leaves an existing
+# SPA-0001/AD-0001 untouched rather than resetting it. To run it again
+# (e.g. against a different, also-fresh database), delete it first:
+#   kubectl delete job solist-seed-default-accounts
+#   kubectl apply -f k8s/seed-job.yaml
+#
+# Uses juliusrarogal/solist-app:v2 — keep this in sync with the tag in
+# k8s/manifest.yaml's Deployment.
+#
+# This file has real credentials in it (the two account passwords) — do not
+# commit it to git as-is.
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: solist-seed-secrets
+type: Opaque
+stringData:
+  SUPER_ADMIN_PASSWORD: "sOlist_SuperAdmin2026!"
+  ADMIN_PASSWORD: "sOlist_Admin2026!"
+
+---
+# Both accounts are created with mustChangePassword: true, so the passwords
+# above are only ever valid for one first login — the account owner is
+# immediately forced to set their own (see server/index.js's
+# ChangePasswordGate flow).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: solist-seed-default-accounts
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: seed
+          image: juliusrarogal/solist-app:v2
+          imagePullPolicy: Always
+          command: ["node", "scripts/seed-default-accounts.mjs"]
+          envFrom:
+            - configMapRef:
+                name: solist-config
+            - secretRef:
+                name: solist-secrets
+            - secretRef:
+                name: solist-seed-secrets
